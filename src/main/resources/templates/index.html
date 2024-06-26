@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.IO Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<textarea rows="20" cols="30" id="chat"></textarea><br>
+<input type="text" id="user"><input type="button" value="msg submit" onclick="myOnClick()">
+</body>
+<script>
+    const {Client} = StompJs;
+    const stomp = new Client({
+        brokerURL: 'ws://localhost:8080/chat',
+        connectHeaders: {},
+        debug: (str) => {
+            console.log(str)
+        },
+        reconnectDelay: 5000, //자동 재 연결
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+    })
+    stomp.activate()
+
+    stomp.onConnect = ()=>{
+        console.log('connected')
+        stomp.subscribe('/topic/public/rooms/1', (msg) => {
+            console.log(msg.body)
+            document.querySelector('#chat').value += msg.body;
+        })
+    }
+
+    function myOnClick() {
+        const content = document.querySelector('#user').value;
+        // socket.emit("msg", {comment});
+        const destination = `/app/chat/rooms/1/send`
+        stomp.publish({
+            destination,
+            body: JSON.stringify({
+                content,
+            }),
+        })
+        document.querySelector('#user').value = '';
+    }
+</script>
+</html>
